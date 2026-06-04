@@ -13,11 +13,224 @@
             "properties": {
                 "description": {
                     "type": "object",
+                    "description": "Defines the metadata for the block, including its unique identifier and creative inventory placement.",
                     "properties": {
                         "identifier": {
                             "type": "string",
-                            "pattern": "^[a-z0-9_.-]+:[a-z0-9_.-]+$",
-                            "description": "The unique identifier for this block (e.g., 'fg0:emerald_axe')."
+                            "description": "The unique identifier for the custom block. Must use the format 'namespace:name' (e.g., 'wiki:custom_block')."
+                        },
+                        "menu_category": {
+                            "type": "object",
+                            "description": "Configures how and where the block appears in the creative inventory, recipe book, and command autocomplete.",
+                            "properties": {
+                                "category": {
+                                    "type": "string",
+                                    "enum": [
+                                        "construction",
+                                        "nature",
+                                        "equipment",
+                                        "items",
+                                        "commands",
+                                        "none"
+                                    ],
+                                    "description": "The primary creative inventory tab that this block is sorted into."
+                                },
+                                "group": {
+                                    "type": "string",
+                                    "description": "Optional item group identifier (e.g., 'minecraft:itemGroup.name.concrete') to cluster this block inside an expandable creative group."
+                                },
+                                "is_hidden_in_commands": {
+                                    "type": "boolean",
+                                    "default": false,
+                                    "description": "If set to true, this block won't autocomplete or be usable in standard game commands like /give or /setblock."
+                                }
+                            },
+                            "required": [
+                                "category"
+                            ],
+                            "additionalProperties": false
+                        },
+                        "traits": {
+                            "type": "object",
+                            "description": "[1.20.20+] Automatically handles complex vanilla states (like rotation, halves, or connections) natively on placement without scripts or triggers.",
+                            "properties": {
+                                "minecraft:connection": {
+                                    "type": "object",
+                                    "description": "[1.26.0+] Handles wall or fence-like cardinal connection checks based on neighboring blocks.",
+                                    "properties": {
+                                        "enabled_states": {
+                                            "type": "array",
+                                            "uniqueItems": true,
+                                            "items": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "minecraft:cardinal_connections"
+                                                ]
+                                            },
+                                            "description": "Enables the boolean block states: 'minecraft:connection_north', '_south', '_west', and '_east'."
+                                        }
+                                    },
+                                    "required": [
+                                        "enabled_states"
+                                    ],
+                                    "additionalProperties": false
+                                },
+                                "minecraft:multi_block": {
+                                    "type": "object",
+                                    "description": "[EXPERIMENTAL 1.26.20] Configures your block as a multi-part structure (e.g., doors, tall flowers). Requires 'Upcoming Creator Features' toggled on.",
+                                    "properties": {
+                                        "enabled_states": {
+                                            "type": "array",
+                                            "uniqueItems": true,
+                                            "items": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "minecraft:multi_block_part"
+                                                ]
+                                            },
+                                            "description": "Enables the 'minecraft:multi_block_part' integer state."
+                                        },
+                                        "direction": {
+                                            "type": "string",
+                                            "enum": [
+                                                "up",
+                                                "down"
+                                            ],
+                                            "description": "The vertical direction that additional block parts are generated toward."
+                                        },
+                                        "parts": {
+                                            "type": "integer",
+                                            "minimum": 2,
+                                            "maximum": 4,
+                                            "description": "The total number of blocks (2 to 4) that construct this multi-block structure."
+                                        }
+                                    },
+                                    "required": [
+                                        "enabled_states",
+                                        "direction",
+                                        "parts"
+                                    ],
+                                    "additionalProperties": false
+                                },
+                                "minecraft:placement_direction": {
+                                    "type": "object",
+                                    "description": "[1.26.0+] Evaluates and stores player rotation context when the block is placed down.",
+                                    "properties": {
+                                        "enabled_states": {
+                                            "type": "array",
+                                            "uniqueItems": true,
+                                            "items": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "minecraft:cardinal_direction",
+                                                    "minecraft:facing_direction",
+                                                    "minecraft:corner_and_cardinal_direction",
+                                                    "minecraft:sixteen_way_rotation"
+                                                ]
+                                            },
+                                            "description": "Selects which orientation tracking states to switch on for this block structure."
+                                        },
+                                        "y_rotation_offset": {
+                                            "type": "integer",
+                                            "enum": [
+                                                0,
+                                                90,
+                                                180,
+                                                270,
+                                                -90,
+                                                -180,
+                                                -270
+                                            ],
+                                            "description": "Applies an axis-aligned angular shift to horizontal states (north, south, east, west)."
+                                        },
+                                        "blocks_to_corner_with": {
+                                            "type": "array",
+                                            "description": "Array of block descriptors (identifiers) this block will evaluate to form connected shapes. Only valid if 'minecraft:corner_and_cardinal_direction' is active.",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "enabled_states"
+                                    ],
+                                    "additionalProperties": false
+                                },
+                                "minecraft:placement_position": {
+                                    "type": "object",
+                                    "description": "[1.20.20+] Captures data regarding the exact position/face coordinates target targeted when clicked.",
+                                    "properties": {
+                                        "enabled_states": {
+                                            "type": "array",
+                                            "uniqueItems": true,
+                                            "items": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "minecraft:block_face",
+                                                    "minecraft:vertical_half"
+                                                ]
+                                            },
+                                            "description": "Tracks target faces ('minecraft:block_face') or vertical split positions ('minecraft:vertical_half')."
+                                        }
+                                    },
+                                    "required": [
+                                        "enabled_states"
+                                    ],
+                                    "additionalProperties": false
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "states": {
+                            "type": "object",
+                            "description": "[1.19.70+] Defines custom block states/variants. Each state can have up to 16 valid values. The first value listed acts as the default state.",
+                            "additionalProperties": {
+                                "description": "A custom block state identifier (e.g., 'wiki:color_variant'). Max 16 values per state.",
+                                "oneOf": [
+                                    {
+                                        "type": "array",
+                                        "description": "An explicit list of up to 16 permissible values (strings, integers, or booleans).",
+                                        "maxItems": 16,
+                                        "uniqueItems": true,
+                                        "items": {
+                                            "type": [
+                                                "string",
+                                                "integer",
+                                                "boolean"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "type": "object",
+                                        "description": "An integer range definition.",
+                                        "properties": {
+                                            "values": {
+                                                "type": "object",
+                                                "description": "The minimum and maximum values for the integer range state. The max cannot be more than 15 higher than the min.",
+                                                "properties": {
+                                                    "min": {
+                                                        "type": "integer",
+                                                        "minimum": 0
+                                                    },
+                                                    "max": {
+                                                        "type": "integer",
+                                                        "maximum": 15
+                                                    }
+                                                },
+                                                "required": [
+                                                    "min",
+                                                    "max"
+                                                ],
+                                                "additionalProperties": false
+                                            }
+                                        },
+                                        "required": [
+                                            "values"
+                                        ],
+                                        "additionalProperties": false
+                                    }
+                                ]
+                            }
                         }
                     },
                     "required": [
@@ -297,14 +510,24 @@
                             "oneOf": [
                                 {
                                     "type": "string",
-                                    "description": "The identifier of the geometry model (e.g., 'geometry.example_block')."
+                                    "description": "The identifier of the geometry model (e.g., 'geometry.example_block').",
+                                    "examples": [
+                                        "minecraft:geometry.full_block",
+                                        "minecraft:geometry.cross",
+                                        "minecraft:geometry.full_block_v1"
+                                    ]
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "identifier": {
                                             "type": "string",
-                                            "description": "The identifier of the geometry."
+                                            "description": "The identifier of the geometry.",
+                                            "examples": [
+                                                "minecraft:geometry.full_block",
+                                                "minecraft:geometry.cross",
+                                                "minecraft:geometry.full_block_v1"
+                                            ]
                                         },
                                         "bone_visibility": {
                                             "type": "object",
@@ -1025,6 +1248,28 @@
                         }
                     },
                     "additionalProperties": false
+                },
+                "permutations": {
+                    "type": "array",
+                    "description": "An array of conditional block configurations. Permutations apply components dynamically when specified Molang conditions are met.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "condition": {
+                                "type": "string",
+                                "description": "A Molang expression string that evaluates whether this permutation should apply (e.g., \"q.block_state('wiki:is_powered') == 1\")."
+                            },
+                            "components": {
+                                "$ref": "#/properties/minecraft:block/properties/components",
+                                "description": "The block components to apply or override when the condition evaluates to true."
+                            }
+                        },
+                        "required": [
+                            "condition",
+                            "components"
+                        ],
+                        "additionalProperties": false
+                    }
                 }
             },
             "required": [
