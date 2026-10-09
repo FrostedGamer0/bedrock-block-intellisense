@@ -1,23 +1,31 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "Minecraft Block Definition",
+    "description": "Bedrock custom block definition. Based on the Bedrock Wiki (wiki.bedrock.dev), targeting format version 1.26.50.",
     "type": "object",
     "properties": {
+        "$schema": {
+            "type": "string"
+        },
         "format_version": {
             "type": "string",
-            "pattern": "^1\\.[0-9]+\\.[0-9]+$",
-            "description": "The minimum game version required for this block definition."
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "examples": [
+                "1.26.50"
+            ],
+            "description": "The minimum game version required for this block definition. Component descriptions are tagged with the minimum format version they require."
         },
         "minecraft:block": {
             "type": "object",
             "properties": {
                 "description": {
                     "type": "object",
-                    "description": "Defines the metadata for the block, including its unique identifier and creative inventory placement.",
+                    "description": "Block metadata: identifier, creative inventory placement, traits and states.",
                     "properties": {
                         "identifier": {
                             "type": "string",
-                            "description": "The unique identifier for the custom block. Must use the format 'namespace:name' (e.g., 'wiki:custom_block')."
+                            "pattern": "^[a-z0-9_.-]+:[a-z0-9_.-]+$",
+                            "description": "The unique identifier for the custom block, in the format 'namespace:name' (e.g., 'wiki:custom_block')."
                         },
                         "menu_category": {
                             "type": "object",
@@ -33,16 +41,16 @@
                                         "commands",
                                         "none"
                                     ],
-                                    "description": "The primary creative inventory tab that this block is sorted into."
+                                    "description": "The primary creative inventory tab."
                                 },
                                 "group": {
                                     "type": "string",
-                                    "description": "Optional item group identifier (e.g., 'minecraft:itemGroup.name.concrete') to cluster this block inside an expandable creative group."
+                                    "description": "Optional item group identifier (e.g., 'minecraft:itemGroup.name.slab') to cluster this block inside an expandable creative group."
                                 },
                                 "is_hidden_in_commands": {
                                     "type": "boolean",
                                     "default": false,
-                                    "description": "If set to true, this block won't autocomplete or be usable in standard game commands like /give or /setblock."
+                                    "description": "If true, the block won't autocomplete or be usable in commands like /give or /setblock."
                                 }
                             },
                             "required": [
@@ -52,11 +60,11 @@
                         },
                         "traits": {
                             "type": "object",
-                            "description": "[1.20.20+] Automatically handles complex vanilla states (like rotation, halves, or connections) natively on placement without scripts or triggers.",
+                            "description": "[1.20.20+] Applies vanilla block states (such as direction) to your block on placement without events or triggers. Permutations are still required to make a functional difference, with conditions querying q.block_state('<state>').",
                             "properties": {
                                 "minecraft:connection": {
                                     "type": "object",
-                                    "description": "[1.26.0+] Handles wall or fence-like cardinal connection checks based on neighboring blocks.",
+                                    "description": "[1.26.0+] Allows fence-like connection permutations by updating cardinal connection states based on adjacent blocks.",
                                     "properties": {
                                         "enabled_states": {
                                             "type": "array",
@@ -67,7 +75,7 @@
                                                     "minecraft:cardinal_connections"
                                                 ]
                                             },
-                                            "description": "Enables the boolean block states: 'minecraft:connection_north', '_south', '_west', and '_east'."
+                                            "description": "Enables ALL of: 'minecraft:connection_north', '_south', '_west' and '_east' (boolean, default false)."
                                         }
                                     },
                                     "required": [
@@ -77,7 +85,7 @@
                                 },
                                 "minecraft:multi_block": {
                                     "type": "object",
-                                    "description": "[EXPERIMENTAL 1.26.20] Configures your block as a multi-part structure (e.g., doors, tall flowers). Requires 'Upcoming Creator Features' toggled on.",
+                                    "description": "Causes the block to be treated as a multi-block made up of multiple parts.",
                                     "properties": {
                                         "enabled_states": {
                                             "type": "array",
@@ -88,21 +96,25 @@
                                                     "minecraft:multi_block_part"
                                                 ]
                                             },
-                                            "description": "Enables the 'minecraft:multi_block_part' integer state."
+                                            "description": "Must contain 'minecraft:multi_block_part' (integer from 0 to parts - 1; the part index)."
                                         },
                                         "direction": {
                                             "type": "string",
                                             "enum": [
+                                                "down",
                                                 "up",
-                                                "down"
+                                                "north",
+                                                "south",
+                                                "west",
+                                                "east"
                                             ],
-                                            "description": "The vertical direction that additional block parts are generated toward."
+                                            "description": "The direction in which parts of the multi-block are placed."
                                         },
                                         "parts": {
                                             "type": "integer",
                                             "minimum": 2,
                                             "maximum": 4,
-                                            "description": "The total number of blocks (2 to 4) that construct this multi-block structure."
+                                            "description": "The number of blocks that make up the multi-block (2-4). Controls how many blocks are placed and the valid range of 'minecraft:multi_block_part'."
                                         }
                                     },
                                     "required": [
@@ -114,7 +126,7 @@
                                 },
                                 "minecraft:placement_direction": {
                                     "type": "object",
-                                    "description": "[1.26.0+] Evaluates and stores player rotation context when the block is placed down.",
+                                    "description": "[1.26.0+] Stores the player's rotation when the block was placed.",
                                     "properties": {
                                         "enabled_states": {
                                             "type": "array",
@@ -128,7 +140,7 @@
                                                     "minecraft:sixteen_way_rotation"
                                                 ]
                                             },
-                                            "description": "Selects which orientation tracking states to switch on for this block structure."
+                                            "description": "Enables states: 'minecraft:cardinal_direction' (south default, west, north, east), 'minecraft:facing_direction' (down default, up, south, north, west, east), 'minecraft:sixteen_way_rotation' (0-15). 'minecraft:corner_and_cardinal_direction' enables both 'minecraft:corner' (none, inner_left, inner_right, outer_left, outer_right) and 'minecraft:cardinal_direction'."
                                         },
                                         "y_rotation_offset": {
                                             "type": "integer",
@@ -141,24 +153,38 @@
                                                 -180,
                                                 -270
                                             ],
-                                            "description": "Applies an axis-aligned angular shift to horizontal states (north, south, east, west)."
+                                            "description": "Offset applied only to horizontal state values (north, south, east, west). Only axis-aligned angles may be specified."
                                         },
                                         "blocks_to_corner_with": {
                                             "type": "array",
-                                            "description": "Array of block descriptors (identifiers) this block will evaluate to form connected shapes. Only valid if 'minecraft:corner_and_cardinal_direction' is active.",
                                             "items": {
-                                                "type": "string"
-                                            }
+                                                "$ref": "#/$defs/block_descriptor"
+                                            },
+                                            "description": "Block descriptors this block can create corners with. Only valid when 'minecraft:corner_and_cardinal_direction' is in enabled_states."
                                         }
                                     },
                                     "required": [
                                         "enabled_states"
                                     ],
+                                    "if": {
+                                        "required": [
+                                            "blocks_to_corner_with"
+                                        ]
+                                    },
+                                    "then": {
+                                        "properties": {
+                                            "enabled_states": {
+                                                "contains": {
+                                                    "const": "minecraft:corner_and_cardinal_direction"
+                                                }
+                                            }
+                                        }
+                                    },
                                     "additionalProperties": false
                                 },
                                 "minecraft:placement_position": {
                                     "type": "object",
-                                    "description": "[1.20.20+] Captures data regarding the exact position/face coordinates target targeted when clicked.",
+                                    "description": "[1.20.20+] Stores where the player placed the block.",
                                     "properties": {
                                         "enabled_states": {
                                             "type": "array",
@@ -170,7 +196,7 @@
                                                     "minecraft:vertical_half"
                                                 ]
                                             },
-                                            "description": "Tracks target faces ('minecraft:block_face') or vertical split positions ('minecraft:vertical_half')."
+                                            "description": "'minecraft:block_face' (face placed on: down default, up, south, north, west, east) and 'minecraft:vertical_half' (bottom default, top)."
                                         }
                                     },
                                     "required": [
@@ -183,13 +209,16 @@
                         },
                         "states": {
                             "type": "object",
-                            "description": "[1.19.70+] Defines custom block states/variants. Each state can have up to 16 valid values. The first value listed acts as the default state.",
+                            "description": "[1.19.70+] Defines custom block states. Each state may have up to 16 values; the first value is the default. A block cannot exceed 65,536 permutations (4 states of 16 values).",
+                            "propertyNames": {
+                                "pattern": "^[a-z0-9_.-]+:[a-z0-9_.-]+$"
+                            },
                             "additionalProperties": {
-                                "description": "A custom block state identifier (e.g., 'wiki:color_variant'). Max 16 values per state.",
+                                "description": "A namespaced custom state (e.g., 'wiki:color_variant') with up to 16 values.",
                                 "oneOf": [
                                     {
                                         "type": "array",
-                                        "description": "An explicit list of up to 16 permissible values (strings, integers, or booleans).",
+                                        "minItems": 1,
                                         "maxItems": 16,
                                         "uniqueItems": true,
                                         "items": {
@@ -198,23 +227,22 @@
                                                 "integer",
                                                 "boolean"
                                             ]
-                                        }
+                                        },
+                                        "description": "An explicit list of up to 16 values (strings, integers or booleans). The first is the default."
                                     },
                                     {
                                         "type": "object",
-                                        "description": "An integer range definition.",
+                                        "description": "An integer range state.",
                                         "properties": {
                                             "values": {
                                                 "type": "object",
-                                                "description": "The minimum and maximum values for the integer range state. The max cannot be more than 15 higher than the min.",
+                                                "description": "Minimum and maximum of the range. 'max' cannot be more than 15 higher than 'min' (not enforceable in JSON Schema).",
                                                 "properties": {
                                                     "min": {
-                                                        "type": "integer",
-                                                        "minimum": 0
+                                                        "type": "integer"
                                                     },
                                                     "max": {
-                                                        "type": "integer",
-                                                        "maximum": 15
+                                                        "type": "integer"
                                                     }
                                                 },
                                                 "required": [
@@ -239,1029 +267,20 @@
                     "additionalProperties": false
                 },
                 "components": {
-                    "type": "object",
-                    "properties": {
-                        "minecraft:chest_obstruction": {
-                            "type": "object",
-                            "description": "[1.26.20+] Determines when the opening of chests placed below the block should be obstructed.",
-                            "properties": {
-                                "obstruction_rule": {
-                                    "type": "string",
-                                    "enum": [
-                                        "always",
-                                        "never",
-                                        "shape"
-                                    ],
-                                    "default": "shape",
-                                    "description": "'always' prevents chests from opening. 'never' allows them to open. 'shape' checks the block's collision box."
-                                }
-                            },
-                            "additionalProperties": false
-                        },
-                        "minecraft:collision_box": {
-                            "description": "[1.19.50+] Defines the area of the block that entities and particles collide with.",
-                            "oneOf": [
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "$ref": "#/$defs/collision_box_object"
-                                },
-                                {
-                                    "type": "array",
-                                    "description": "An array of up to 16 object collision box definitions. An empty array results in full block collision.",
-                                    "maxItems": 16,
-                                    "items": {
-                                        "$ref": "#/$defs/collision_box_object"
-                                    }
-                                }
-                            ]
-                        },
-                        "minecraft:connection_rule": {
-                            "type": "object",
-                            "description": "[1.26.0+] Determines whether other blocks such as fences and walls can connect to the block.",
-                            "properties": {
-                                "accepts_connections_from": {
-                                    "type": "string",
-                                    "enum": [
-                                        "all",
-                                        "only_fences",
-                                        "none"
-                                    ],
-                                    "default": "all",
-                                    "description": "'all' allows any block to connect. 'only_fences' restricts connections to fences. 'none' blocks all connections."
-                                },
-                                "enabled_directions": {
-                                    "type": "array",
-                                    "description": "Lists the cardinal directions from which other blocks can connect to the block.",
-                                    "uniqueItems": true,
-                                    "items": {
-                                        "type": "string",
-                                        "enum": [
-                                            "north",
-                                            "east",
-                                            "south",
-                                            "west"
-                                        ]
-                                    },
-                                    "default": [
-                                        "north",
-                                        "east",
-                                        "south",
-                                        "west"
-                                    ]
-                                }
-                            },
-                            "additionalProperties": false
-                        },
-                        "minecraft:crafting_table": {
-                            "type": "object",
-                            "description": "[1.19.50+] Turns your block into a crafting table, opening a functional crafting interface when interacted with.",
-                            "properties": {
-                                "crafting_tags": {
-                                    "type": "array",
-                                    "description": "Determines which recipes can be used by this crafting table. Maximum of 64 tags, up to 64 characters each.",
-                                    "maxItems": 64,
-                                    "uniqueItems": true,
-                                    "items": {
-                                        "type": "string",
-                                        "maxLength": 64,
-                                        "defaultSnippets": []
-                                    }
-                                },
-                                "table_name": {
-                                    "type": "string",
-                                    "description": "Specifies the language file key or raw string displayed above the crafting grid. Defaults to the block's display name if omitted."
-                                }
-                            },
-                            "required": [
-                                "crafting_tags"
-                            ],
-                            "additionalProperties": false
-                        },
-                        "minecraft:destructible_by_explosion": {
-                            "description": "[1.19.20+] Determines whether the block can be destroyed by explosions. Can be a boolean or an object with custom resistance.",
-                            "oneOf": [
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "explosion_resistance": {
-                                            "type": "number",
-                                            "minimum": 0,
-                                            "default": 0,
-                                            "description": "Defines how resistant the block is to being destroyed by explosions. Higher values provide greater resistance."
-                                        }
-                                    },
-                                    "additionalProperties": false
-                                }
-                            ]
-                        },
-                        "minecraft:destructible_by_mining": {
-                            "description": "[1.19.20+] Determines how long it takes for players to mine the block. Can be a boolean or an object setting its hardness.",
-                            "oneOf": [
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "seconds_to_destroy": {
-                                            "type": "number",
-                                            "minimum": 0,
-                                            "default": 0,
-                                            "description": "Sets the hardness value of the block.\n\n⚠️ WARNING: This parameter name is misleading! It does not set the literal seconds to destroy the block; it sets the base hardness. By default, the actual time it takes to mine a custom block is 1.5× the value set here."
-                                        }
-                                    },
-                                    "additionalProperties": false
-                                }
-                            ]
-                        },
-                        "minecraft:destruction_particles": {
-                            "type": "object",
-                            "description": "[1.21.90+] Determines the appearance of the particles created when hitting, destroying, stepping on, and falling onto blocks.",
-                            "properties": {
-                                "particle_count": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "maximum": 255,
-                                    "default": 100,
-                                    "description": "Determines how many particles are created when the block is destroyed (0-255)."
-                                },
-                                "texture": {
-                                    "type": "string",
-                                    "description": "Specifies the texture atlas shortname to use from terrain_texture.json. Defaults to the 'down' material instance."
-                                },
-                                "tint_method": {
-                                    "type": "string",
-                                    "enum": [
-                                        "none",
-                                        "grass",
-                                        "foliage",
-                                        "water"
-                                    ],
-                                    "description": "Specifies the tint method used to tint the texture based on the biome the block is placed in."
-                                }
-                            },
-                            "additionalProperties": false
-                        },
-                        "minecraft:display_name": {
-                            "type": "string",
-                            "description": "[1.19.60+] The language file key or raw string that determines the text displayed when hovering over the block in the inventory and hotbar.\n\n⚠️ NOTE: Minecraft may revert to using 'tile.<identifier>.name' in some scenarios, such as the 'Can place on' tooltip.",
-                            "defaultSnippets": [
-                                {
-                                    "label": "Localized display name key",
-                                    "body": "tile.${1:namespace}:${2:block_name}.name"
-                                }
-                            ]
-                        },
-                        "minecraft:embedded_visual": {
-                            "type": "object",
-                            "description": "Determines how this block is displayed when inside a Flower Pot. (The block must also have the 'minecraft:flower_pottable' component applied).\n\n🛑 CRITICAL: ROOT ONLY! This component may only be defined in the root components object of your block. It CANNOT be specified per permutation.",
-                            "properties": {
-                                "geometry": {
-                                    "description": "The displayed geometry component identifier string or definition object.",
-                                    "oneOf": [
-                                        {
-                                            "type": "string"
-                                        },
-                                        {
-                                            "type": "object"
-                                        }
-                                    ]
-                                },
-                                "material_instances": {
-                                    "type": "object",
-                                    "description": "The displayed material instances component object mapping material names to textures/render methods.",
-                                    "additionalProperties": {
-                                        "type": "object",
-                                        "properties": {
-                                            "texture": {
-                                                "type": "string"
-                                            },
-                                            "render_method": {
-                                                "type": "string"
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            "required": [
-                                "geometry",
-                                "material_instances"
-                            ],
-                            "additionalProperties": false
-                        },
-                        "minecraft:entity_fall_on": {
-                            "type": "object",
-                            "description": "[1.21.10+] Causes an entity fall on event to be triggered when an entity falls onto the block.",
-                            "properties": {
-                                "min_fall_distance": {
-                                    "type": "number",
-                                    "minimum": 0,
-                                    "default": 0,
-                                    "description": "The minimum distance (in blocks) that an entity must fall in order to trigger the event."
-                                }
-                            },
-                            "additionalProperties": false
-                        },
-                        "minecraft:flammable": {
-                            "description": "[1.19.10+] Determines how flammable the block is. Can be a boolean or an object defining catching and destruction chances.",
-                            "oneOf": [
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "catch_chance_modifier": {
-                                            "type": "integer",
-                                            "minimum": 0,
-                                            "default": 5,
-                                            "description": "Affects the chance that this block catches flame. When 0, fire eventually burns out. When >0, fire burns until destroyed (or forever if destroy_chance is 0). Default is 5 (Vanilla Planks)."
-                                        },
-                                        "destroy_chance_modifier": {
-                                            "type": "integer",
-                                            "minimum": 0,
-                                            "default": 20,
-                                            "description": "Affects the chance that this block will be consumed/destroyed by flames when on fire. Default is 20 (Vanilla Planks)."
-                                        }
-                                    },
-                                    "additionalProperties": false
-                                }
-                            ]
-                        },
-                        "minecraft:flower_pottable": {
-                            "type": "object",
-                            "description": "Allows the block to be placed in a Flower Pot. Use the 'minecraft:embedded_visual' component to change its appearance inside the pot.\n\n🛑 CRITICAL: ROOT ONLY! This component may only be defined in the root components object of your block. It CANNOT be specified per permutation.",
-                            "additionalProperties": false
-                        },
-                        "minecraft:friction": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 0.9,
-                            "default": 0.4,
-                            "description": "[1.19.20+] Determines how slippery the block is for entities moving on top (0.0-0.9). Lower values mean the block is more slippery.\n\n⚠️ WARNING: This component is somewhat broken! While it works correctly on boats, higher friction values cause other entities to speed up rather than slow down."
-                        },
-                        "minecraft:geometry": {
-                            "description": "[1.21.90+] Determines the geometry of this block and any culling rules that should be applied.\n\n⚠️ LIMITATIONS:\n1. Model size is limited to 30×30×30 pixels.\n2. At least 1 pixel on each axis must sit within the normal 16×16×16 block unit space.\n3. The absolute position bounds are 30 pixels in each direction from the origin.",
-                            "oneOf": [
-                                {
-                                    "type": "string",
-                                    "description": "The identifier of the geometry model (e.g., 'geometry.example_block').",
-                                    "examples": [
-                                        "minecraft:geometry.full_block",
-                                        "minecraft:geometry.cross",
-                                        "minecraft:geometry.full_block_v1"
-                                    ]
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "identifier": {
-                                            "type": "string",
-                                            "description": "The identifier of the geometry.",
-                                            "examples": [
-                                                "minecraft:geometry.full_block",
-                                                "minecraft:geometry.cross",
-                                                "minecraft:geometry.full_block_v1"
-                                            ]
-                                        },
-                                        "bone_visibility": {
-                                            "type": "object",
-                                            "description": "A key-value map determining bone visibility. Keys are exact bone names; values can be booleans or Molang strings.",
-                                            "additionalProperties": {
-                                                "oneOf": [
-                                                    {
-                                                        "type": "boolean"
-                                                    },
-                                                    {
-                                                        "type": "string"
-                                                    }
-                                                ]
-                                            }
-                                        },
-                                        "culling": {
-                                            "type": "string",
-                                            "pattern": "^[a-z0-9_.-]+:culling\\.[a-z0-9_.-]+$",
-                                            "description": "The identifier of the culling rules. Should match format '<namespace>:culling.<name>'."
-                                        },
-                                        "culling_layer": {
-                                            "type": "string",
-                                            "description": "Determines the culling layer identifier. If using 'minecraft', allowed values are 'minecraft:culling_layer.undefined' or 'minecraft:culling_layer.leaves'.",
-                                            "anyOf": [
-                                                {
-                                                    "enum": [
-                                                        "minecraft:culling_layer.undefined",
-                                                        "minecraft:culling_layer.leaves"
-                                                    ]
-                                                },
-                                                {
-                                                    "type": "string",
-                                                    "pattern": "^(?!minecraft:)[a-z0-9_.-]+:culling_layer\\.[a-z0-9_.-]+$"
-                                                }
-                                            ]
-                                        },
-                                        "uv_lock": {
-                                            "description": "Determines whether UV textures lock their original rotation when the block rotates.",
-                                            "oneOf": [
-                                                {
-                                                    "type": "boolean"
-                                                },
-                                                {
-                                                    "type": "array",
-                                                    "uniqueItems": true,
-                                                    "items": {
-                                                        "type": "string"
-                                                    }
-                                                }
-                                            ],
-                                            "default": false
-                                        }
-                                    },
-                                    "required": [
-                                        "identifier"
-                                    ],
-                                    "additionalProperties": false
-                                }
-                            ]
-                        },
-                        "minecraft:item_visual": {
-                            "type": "object",
-                            "description": "[1.21.60+] Determines how this block is displayed as an item when in inventories, item frames, or dropped on the ground.",
-                            "properties": {
-                                "geometry": {
-                                    "description": "The displayed geometry component identifier string or definition object.",
-                                    "oneOf": [
-                                        {
-                                            "type": "string"
-                                        },
-                                        {
-                                            "type": "object"
-                                        }
-                                    ]
-                                },
-                                "material_instances": {
-                                    "type": "object",
-                                    "description": "The displayed material instances component object mapping material names to textures/render methods.",
-                                    "additionalProperties": {
-                                        "type": "object",
-                                        "properties": {
-                                            "texture": {
-                                                "type": "string"
-                                            },
-                                            "render_method": {
-                                                "type": "string"
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            "required": [
-                                "geometry",
-                                "material_instances"
-                            ],
-                            "additionalProperties": false
-                        },
-                        "minecraft:leashable": {
-                            "type": "object",
-                            "description": "[1.26.0+] Allows leads and balloons to be attached to the block like fences.",
-                            "properties": {
-                                "offset": {
-                                    "type": "array",
-                                    "description": "Determines the position of the middle of the knot relative to the bottom middle of the block.",
-                                    "minItems": 3,
-                                    "maxItems": 3,
-                                    "items": {
-                                        "type": "number"
-                                    },
-                                    "default": [
-                                        0,
-                                        0,
-                                        0
-                                    ]
-                                }
-                            },
-                            "additionalProperties": false
-                        },
-                        "minecraft:light_dampening": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 15,
-                            "default": 15,
-                            "description": "[1.19.10+] Determines the maximum number of light levels (0-15) that will be dampened when passing through the block."
-                        },
-                        "minecraft:light_emission": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 15,
-                            "default": 0,
-                            "description": "[1.19.20+] Determines the integer light level (0-15) emitted by the block."
-                        },
-                        "minecraft:liquid_detection": {
-                            "type": "object",
-                            "description": "[1.26.0+] Determines how this block behaves with different types of liquid.",
-                            "properties": {
-                                "detection_rules": {
-                                    "type": "array",
-                                    "description": "An array of liquid behavior configurations.",
-                                    "items": {
-                                        "type": "object",
-                                        "properties": {
-                                            "liquid_type": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "water"
-                                                ],
-                                                "description": "Which type of liquid this rule applies to. Currently only 'water' is supported."
-                                            },
-                                            "can_contain_liquid": {
-                                                "type": "boolean",
-                                                "description": "Whether the liquid type can occupy the same space as this block (e.g., waterlogging)."
-                                            },
-                                            "on_liquid_touches": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "blocking",
-                                                    "broken",
-                                                    "no_reaction",
-                                                    "popped"
-                                                ],
-                                                "default": "blocking",
-                                                "description": "'blocking' prevents flow. 'broken' breaks the block. 'no_reaction' lets it flow through. 'popped' drops the block as loot."
-                                            },
-                                            "stops_liquid_flowing_from_direction": {
-                                                "type": "array",
-                                                "description": "Directions liquid cannot flow out of (or into, if on_liquid_touches is 'no_reaction').",
-                                                "uniqueItems": true,
-                                                "items": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "north",
-                                                        "east",
-                                                        "south",
-                                                        "west",
-                                                        "up",
-                                                        "down"
-                                                    ]
-                                                }
-                                            },
-                                            "use_liquid_clipping": {
-                                                "type": "boolean",
-                                                "default": false,
-                                                "description": "Determines whether liquid contained in the block is visually clipped based on the block's encompassing collider."
-                                            }
-                                        },
-                                        "required": [
-                                            "liquid_type",
-                                            "can_contain_liquid"
-                                        ],
-                                        "additionalProperties": false
-                                    }
-                                }
-                            },
-                            "required": [
-                                "detection_rules"
-                            ],
-                            "additionalProperties": false
-                        },
-                        "minecraft:loot": {
-                            "type": "string",
-                            "description": "The path to the loot table file that determines what drops when this block is destroyed. (This is automatically ignored if the block is mined with Silk Touch). If omitted, the block drops itself as an item.",
-                            "defaultSnippets": [
-                                {
-                                    "label": "Standard block loot table path",
-                                    "body": "loot_tables/blocks/${1:block_name}.json"
-                                }
-                            ]
-                        },
-                        "minecraft:map_color": {
-                            "description": "Defines the color of the block when it is rendered on an in-game Map. If omitted, the block will be invisible/ignored on maps.",
-                            "oneOf": [
-                                {
-                                    "type": "string",
-                                    "pattern": "^#[0-9A-Fa-f]{6}$",
-                                    "description": "A hex string format defining the map color (e.g., '#FFFFFF')."
-                                },
-                                {
-                                    "type": "array",
-                                    "minItems": 3,
-                                    "maxItems": 3,
-                                    "items": {
-                                        "type": "integer",
-                                        "minimum": 0,
-                                        "maximum": 255
-                                    },
-                                    "description": "An RGB array format defining the map color (e.g., [255, 255, 255])."
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "color": {
-                                            "description": "The map color defined as either a hex string or an RGB array.",
-                                            "oneOf": [
-                                                {
-                                                    "type": "string",
-                                                    "pattern": "^#[0-9A-Fa-f]{6}$"
-                                                },
-                                                {
-                                                    "type": "array",
-                                                    "minItems": 3,
-                                                    "maxItems": 3,
-                                                    "items": {
-                                                        "type": "integer",
-                                                        "minimum": 0,
-                                                        "maximum": 255
-                                                    }
-                                                }
-                                            ]
-                                        },
-                                        "tint_method": {
-                                            "type": "string",
-                                            "enum": [
-                                                "none",
-                                                "grass",
-                                                "foliage",
-                                                "water"
-                                            ],
-                                            "description": "Specifies the optional biome-based tint method used to alter the map color dynamically."
-                                        }
-                                    },
-                                    "required": [
-                                        "color"
-                                    ],
-                                    "additionalProperties": false
-                                }
-                            ]
-                        },
-                        "minecraft:material_instances": {
-                            "type": "object",
-                            "description": "[1.19.40+] Defines the material instances of a block, configuring how parts of the block are rendered.\n\n⚠️ KNOWN ISSUES:\n1. Smooth lighting (ambient occlusion) may not perfectly match vanilla blocks (MCPE-237493).\n2. In UIs, face dimming applies before item display transforms rotate the model (MCPE-235788).\n3. PBR/Raytracing textures are NOT supported when rendered as an entity/item (MCPE-237517).",
-                            "additionalProperties": {
-                                "oneOf": [
-                                    {
-                                        "type": "string",
-                                        "description": "The name of another defined material instance to inherit its properties from (e.g., 'end')."
-                                    },
-                                    {
-                                        "type": "object",
-                                        "properties": {
-                                            "texture": {
-                                                "type": "string",
-                                                "description": "Specifies the texture atlas shortname to use from terrain_texture.json."
-                                            },
-                                            "render_method": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "opaque",
-                                                    "alpha_test",
-                                                    "blend",
-                                                    "double_sided"
-                                                ],
-                                                "default": "opaque",
-                                                "description": "The render method used for faces. Note: All material instances on the block must use the exact same render method."
-                                            },
-                                            "tint_method": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "none",
-                                                    "grass",
-                                                    "foliage",
-                                                    "water"
-                                                ],
-                                                "description": "Specifies the tint method used to tint the texture based on the biome."
-                                            },
-                                            "alpha_masked_tint": {
-                                                "type": "boolean",
-                                                "default": false,
-                                                "description": "When true, tinting is based on the alpha channel. Requires a valid 'tint_method' and 'render_method' must be 'opaque'."
-                                            },
-                                            "ambient_occlusion": {
-                                                "description": "Determines whether smooth lighting is applied. Can be a boolean or a float (0.0-10.0) for intensity.",
-                                                "oneOf": [
-                                                    {
-                                                        "type": "boolean"
-                                                    },
-                                                    {
-                                                        "type": "number",
-                                                        "minimum": 0,
-                                                        "maximum": 10
-                                                    }
-                                                ]
-                                            },
-                                            "face_dimming": {
-                                                "type": "boolean",
-                                                "description": "Determines whether faces are dimmed by their direction. Defaults to false for light emitters, true for others."
-                                            },
-                                            "isotropic": {
-                                                "type": "boolean",
-                                                "default": false,
-                                                "description": "Determines whether the UVs of faces are randomly rotated based on the block's world position."
-                                            }
-                                        },
-                                        "required": [
-                                            "texture"
-                                        ],
-                                        "additionalProperties": false
-                                    }
-                                ]
-                            }
-                        },
-                        "minecraft:movable": {
-                            "type": "object",
-                            "description": "[1.21.100+] Determines how a block can be moved by pistons.",
-                            "properties": {
-                                "movement_type": {
-                                    "type": "string",
-                                    "enum": [
-                                        "immovable",
-                                        "popped",
-                                        "push",
-                                        "push_pull"
-                                    ],
-                                    "default": "push_pull",
-                                    "description": "'immovable' prevents movement. 'popped' breaks the block into a loot drop. 'push' allows pushing but not pulling. 'push_pull' allows full piston mechanics."
-                                },
-                                "sticky": {
-                                    "type": "string",
-                                    "enum": [
-                                        "same"
-                                    ],
-                                    "description": "Setting this to 'same' gives the block slime/honey block functionality, causing adjacent blocks to move with it."
-                                }
-                            },
-                            "additionalProperties": false
-                        },
-                        "minecraft:placement_filter": {
-                            "type": "object",
-                            "description": "[1.19.60+] Determines the placement conditions required for a block to be placed or survive. If conditions fail after placement, the block pops off as an item.",
-                            "properties": {
-                                "conditions": {
-                                    "type": "array",
-                                    "maxItems": 64,
-                                    "description": "List of up to 64 condition objects specifying where the block can exist.",
-                                    "items": {
-                                        "type": "object",
-                                        "properties": {
-                                            "allowed_faces": {
-                                                "type": "array",
-                                                "uniqueItems": true,
-                                                "description": "The valid block faces this block can be attached to.",
-                                                "items": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "all",
-                                                        "side",
-                                                        "down",
-                                                        "up",
-                                                        "north",
-                                                        "south",
-                                                        "west",
-                                                        "east"
-                                                    ]
-                                                }
-                                            },
-                                            "block_filter": {
-                                                "type": "array",
-                                                "maxItems": 64,
-                                                "description": "Array of up to 64 block descriptors that this block can be placed against.",
-                                                "items": {
-                                                    "oneOf": [
-                                                        {
-                                                            "type": "string",
-                                                            "description": "The basic block identifier (e.g., 'minecraft:dirt')."
-                                                        },
-                                                        {
-                                                            "type": "object",
-                                                            "properties": {
-                                                                "name": {
-                                                                    "type": "string",
-                                                                    "description": "The block identifier."
-                                                                },
-                                                                "states": {
-                                                                    "type": "object",
-                                                                    "description": "Specific block state key-value pairs required for matching.",
-                                                                    "additionalProperties": {
-                                                                        "oneOf": [
-                                                                            {
-                                                                                "type": "string"
-                                                                            },
-                                                                            {
-                                                                                "type": "integer"
-                                                                            },
-                                                                            {
-                                                                                "type": "boolean"
-                                                                            }
-                                                                        ]
-                                                                    }
-                                                                },
-                                                                "tags": {
-                                                                    "type": "string",
-                                                                    "description": "A Molang expression string evaluating block tags (e.g., '!q.any_tag(...)')."
-                                                                }
-                                                            },
-                                                            "additionalProperties": false
-                                                        }
-                                                    ]
-                                                }
-                                            }
-                                        },
-                                        "additionalProperties": false
-                                    }
-                                }
-                            },
-                            "required": [
-                                "conditions"
-                            ],
-                            "additionalProperties": false
-                        },
-                        "minecraft:precipitation_interactions": {
-                            "type": "object",
-                            "description": "[1.21.120+] Determines how the block interacts with precipitation (rain and snow).",
-                            "properties": {
-                                "precipitation_behavior": {
-                                    "type": "string",
-                                    "enum": [
-                                        "obstruct_rain_accumulate_snow",
-                                        "obstruct_rain",
-                                        "none"
-                                    ],
-                                    "default": "obstruct_rain_accumulate_snow",
-                                    "description": "'obstruct_rain_accumulate_snow' blocks rain and allows snow layers to build up on top. 'obstruct_rain' blocks rain but prevents snow accumulation. 'none' allows both rain and snow to pass right through the block."
-                                }
-                            },
-                            "additionalProperties": false
-                        },
-                        "minecraft:random_offset": {
-                            "type": "object",
-                            "description": "[1.21.100+] Causes a random offset to be applied to the block based on its world position, shifting its collision, selection, and geometry. Offset models must still adhere to geometry limits.",
-                            "properties": {
-                                "x": {
-                                    "$ref": "#/$defs/random_offset_axis"
-                                },
-                                "y": {
-                                    "$ref": "#/$defs/random_offset_axis"
-                                },
-                                "z": {
-                                    "$ref": "#/$defs/random_offset_axis"
-                                }
-                            },
-                            "additionalProperties": false
-                        },
-                        "minecraft:redstone_conductivity": {
-                            "type": "object",
-                            "description": "[1.21.40+] Defines the block's ability to conduct redstone power and interact with redstone wire routing.",
-                            "properties": {
-                                "redstone_conductor": {
-                                    "type": "boolean",
-                                    "description": "Determines whether this block conducts direct redstone power (like stone or dirt blocks vs. glass or slabs)."
-                                },
-                                "allows_wire_to_step_down": {
-                                    "type": "boolean",
-                                    "description": "Determines whether redstone wire can travel down the side of this block if it is a non-conductor. (Redstone wire can always travel down the side of true redstone conductors)."
-                                }
-                            },
-                            "additionalProperties": false
-                        },
-                        "minecraft:redstone_consumer": {
-                            "type": "object",
-                            "description": "Allows the block to respond to redstone power via custom components using the onRedstoneUpdate() event hook.\n\n🛑 CRITICAL: ROOT ONLY! This component may only be defined in the root components object of your block. It CANNOT be specified per permutation.",
-                            "properties": {
-                                "min_power": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "maximum": 15,
-                                    "default": 0,
-                                    "description": "Determines the minimum power level required to trigger the onRedstoneUpdate() custom component event hook."
-                                },
-                                "propagates_power": {
-                                    "type": "boolean",
-                                    "default": false,
-                                    "description": "Determines whether this block conducts redstone power to adjacent blocks. Note: This overrides 'redstone_conductor' in the redstone conductivity component, allowing a block to act like a conductor for routing while not actually passing power."
-                                }
-                            },
-                            "required": [
-                                "min_power"
-                            ],
-                            "additionalProperties": false
-                        },
-                        "minecraft:redstone_producer": {
-                            "type": "object",
-                            "description": "Causes the block to produce and emit redstone power.",
-                            "properties": {
-                                "power": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "maximum": 15,
-                                    "description": "Determines the power level produced by the block as an integer (0-15)."
-                                },
-                                "strongly_powered_face": {
-                                    "type": "string",
-                                    "enum": [
-                                        "down",
-                                        "up",
-                                        "north",
-                                        "south",
-                                        "west",
-                                        "east"
-                                    ],
-                                    "description": "Determines the direction where strong power is produced. If strong power is received by a redstone conductor, blocks surrounding that conductor will also become powered."
-                                },
-                                "connected_faces": {
-                                    "type": "array",
-                                    "uniqueItems": true,
-                                    "description": "Determines which directions power is produced in. By default, all faces are connected.",
-                                    "items": {
-                                        "type": "string",
-                                        "enum": [
-                                            "down",
-                                            "up",
-                                            "north",
-                                            "south",
-                                            "west",
-                                            "east"
-                                        ]
-                                    }
-                                },
-                                "transform_relative": {
-                                    "type": "boolean",
-                                    "default": false,
-                                    "description": "Determines whether face directions should dynamically rotate based on the rotation values defined in the block's transformation component."
-                                }
-                            },
-                            "required": [
-                                "power",
-                                "strongly_powered_face"
-                            ],
-                            "additionalProperties": false
-                        },
-                        "minecraft:replaceable": {
-                            "type": "object",
-                            "description": "Allows this block to be automatically replaced when a player attempts to place another block in its exact position (similar to grass, tall grass, or snow layers). Note: It does not allow the block to be replaced by a block of the exact same permutation.",
-                            "properties": {},
-                            "additionalProperties": false
-                        },
-                        "minecraft:selection_box": {
-                            "description": "[1.19.60+] Defines the area of the block that can be selected/targeted by players. When true, a standard full-block outline is used. When false, the block cannot be targeted at all.",
-                            "oneOf": [
-                                {
-                                    "type": "boolean",
-                                    "default": true
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "origin": {
-                                            "type": "array",
-                                            "description": "The bottom north-western corner of the selection box, measured in pixels from the bottom center of the block unit. Range: [-8, 0, -8] to [8, 16, 8].",
-                                            "minItems": 3,
-                                            "maxItems": 3,
-                                            "items": {
-                                                "type": "number"
-                                            },
-                                            "default": [
-                                                -8,
-                                                0,
-                                                -8
-                                            ]
-                                        },
-                                        "size": {
-                                            "type": "array",
-                                            "description": "The size of each side of the selection box in pixels, extending from the origin point.",
-                                            "minItems": 3,
-                                            "maxItems": 3,
-                                            "items": {
-                                                "type": "number"
-                                            },
-                                            "default": [
-                                                16,
-                                                16,
-                                                16
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "origin",
-                                        "size"
-                                    ],
-                                    "additionalProperties": false
-                                }
-                            ]
-                        },
-                        "minecraft:support": {
-                            "type": "object",
-                            "description": "[1.26.0+] Defines the block's ability to support other blocks that are attached to it (like torches or carpets resting properly on non-standard shapes).",
-                            "properties": {
-                                "shape": {
-                                    "type": "string",
-                                    "enum": [
-                                        "fence",
-                                        "stair"
-                                    ],
-                                    "description": "Configures the block's top/side attachment behavior to mimic a vanilla fence or stair shape."
-                                }
-                            },
-                            "required": [
-                                "shape"
-                            ],
-                            "additionalProperties": false
-                        },
-                        "minecraft:tick": {
-                            "type": "object",
-                            "description": "[1.21.10+] Causes the block to 'tick' after a random delay within the interval_range. Handled via the onTick() custom component event hook.\n\n⚠️ NOTE: Chunks have a hard limit of 100 queued block ticks per game tick. If a chunk contains a massive amount of ticking blocks, execution might be slightly delayed.",
-                            "properties": {
-                                "interval_range": {
-                                    "type": "array",
-                                    "description": "Two integers [min, max] defining the minimum and maximum delay (in game ticks) before the block ticks.",
-                                    "minItems": 2,
-                                    "maxItems": 2,
-                                    "items": {
-                                        "type": "integer",
-                                        "minimum": 0
-                                    }
-                                },
-                                "looping": {
-                                    "type": "boolean",
-                                    "default": false,
-                                    "description": "Determines whether the block should continuously schedule a new tick after one finishes, or only tick once."
-                                }
-                            },
-                            "required": [
-                                "interval_range"
-                            ],
-                            "additionalProperties": false
-                        },
-                        "minecraft:transformation": {
-                            "type": "object",
-                            "description": "[1.21.0+] Determines the transformation (translation, rotation, and scaling) of the block's geometry, collision box, and selection box. Transformed models must still adhere to geometry limits.",
-                            "properties": {
-                                "translation": {
-                                    "type": "array",
-                                    "description": "The number of block units to offset the geometry by on each axis [X, Y, Z].",
-                                    "minItems": 3,
-                                    "maxItems": 3,
-                                    "items": {
-                                        "type": "number"
-                                    }
-                                },
-                                "rotation": {
-                                    "type": "array",
-                                    "description": "The number of degrees to rotate the geometry by on each axis [X, Y, Z]. Must be in increments of 90 (use negative numbers for counter-clockwise rotation).",
-                                    "minItems": 3,
-                                    "maxItems": 3,
-                                    "items": {
-                                        "type": "number",
-                                        "multipleOf": 90
-                                    }
-                                },
-                                "rotation_pivot": {
-                                    "type": "array",
-                                    "description": "The pivot point (in block units) to rotate the block on. Defaults to the center of the block [0, 0, 0].",
-                                    "minItems": 3,
-                                    "maxItems": 3,
-                                    "items": {
-                                        "type": "number"
-                                    }
-                                },
-                                "scale": {
-                                    "type": "array",
-                                    "description": "The multiplier factor to scale the geometry by on each axis [X, Y, Z].",
-                                    "minItems": 3,
-                                    "maxItems": 3,
-                                    "items": {
-                                        "type": "number"
-                                    }
-                                },
-                                "scale_pivot": {
-                                    "type": "array",
-                                    "description": "The pivot point (in block units) to scale the block from. Defaults to the center of the block [0, 0, 0].",
-                                    "minItems": 3,
-                                    "maxItems": 3,
-                                    "items": {
-                                        "type": "number"
-                                    }
-                                }
-                            },
-                            "additionalProperties": false
-                        }
-                    },
-                    "additionalProperties": false
+                    "$ref": "#/$defs/components"
                 },
                 "permutations": {
                     "type": "array",
-                    "description": "An array of conditional block configurations. Permutations apply components dynamically when specified Molang conditions are met.",
+                    "description": "Conditional block configurations. Components (including tags) are applied when the Molang condition is truthy; later entries override earlier ones.",
                     "items": {
                         "type": "object",
                         "properties": {
                             "condition": {
                                 "type": "string",
-                                "description": "A Molang expression string that evaluates whether this permutation should apply (e.g., \"q.block_state('wiki:is_powered') == 1\")."
+                                "description": "A Molang expression evaluated against the block's permutation, e.g. \"q.block_state('wiki:is_powered') == 1\". Only q.block_state() is available; no side effects (no random math functions, no variable assignment)."
                             },
                             "components": {
-                                "$ref": "#/properties/minecraft:block/properties/components",
-                                "description": "The block components to apply or override when the condition evaluates to true."
+                                "$ref": "#/$defs/permutation_components"
                             }
                         },
                         "required": [
@@ -1285,18 +304,58 @@
     ],
     "additionalProperties": false,
     "$defs": {
+        "vector3": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+                "type": "number"
+            }
+        },
+        "block_descriptor": {
+            "description": "A block descriptor: either a block identifier string, or an object matching by name/states and/or a Molang tags expression.",
+            "oneOf": [
+                {
+                    "type": "string",
+                    "description": "The basic block identifier (e.g., 'minecraft:dirt')."
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "The block identifier."
+                        },
+                        "states": {
+                            "type": "object",
+                            "description": "Specific block state key-value pairs required for matching.",
+                            "additionalProperties": {
+                                "type": [
+                                    "string",
+                                    "integer",
+                                    "boolean"
+                                ]
+                            }
+                        },
+                        "tags": {
+                            "type": "string",
+                            "description": "A Molang expression evaluating block tags, using q.any_tag(...) and q.all_tags(...) (e.g., \"!q.any_tag('minecraft:crop', 'wiki:tag')\")."
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            ]
+        },
         "collision_box_object": {
             "type": "object",
             "properties": {
                 "origin": {
-                    "type": "array",
-                    "description": "Bottom north-western corner of the collision box. Measured in pixels from the bottom center of the block unit. [-8, 0, -8] to [8, 16, 8].",
-                    "minItems": 3,
-                    "maxItems": 3,
-                    "items": {
-                        "type": "number"
-                    },
-                    "defaultSnippets": [],
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/vector3"
+                        }
+                    ],
+                    "description": "Bottom north-western corner of the collision box. Measured in pixels from the bottom center of the block unit. Must be in the range [-8, 0, -8] to [8, 16, 8].",
                     "default": [
                         -8,
                         0,
@@ -1304,14 +363,12 @@
                     ]
                 },
                 "size": {
-                    "type": "array",
-                    "description": "Size of each side of the collision box. Sum of origin and size must be in the range [-8, 0, -8] to [8, 24, 8].",
-                    "minItems": 3,
-                    "maxItems": 3,
-                    "items": {
-                        "type": "number"
-                    },
-                    "defaultSnippets": [],
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/vector3"
+                        }
+                    ],
+                    "description": "Size of each side of the collision box, measured in pixels from the origin. The sum of origin and size must be in the range [-8, 0, -8] to [8, 24, 8].",
                     "default": [
                         16,
                         16,
@@ -1319,6 +376,46 @@
                     ]
                 }
             },
+            "required": [
+                "origin",
+                "size"
+            ],
+            "additionalProperties": false
+        },
+        "selection_box_object": {
+            "type": "object",
+            "properties": {
+                "origin": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/vector3"
+                        }
+                    ],
+                    "description": "Bottom north-western corner of the selection box. Measured in pixels from the bottom center of the block unit. Must be in the range [-8, 0, -8] to [8, 16, 8].",
+                    "default": [
+                        -8,
+                        0,
+                        -8
+                    ]
+                },
+                "size": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/vector3"
+                        }
+                    ],
+                    "description": "Size of each side of the selection box, measured in pixels from the origin. The sum of origin and size must be in the range [-8, 0, -8] to [8, 16, 8].",
+                    "default": [
+                        16,
+                        16,
+                        16
+                    ]
+                }
+            },
+            "required": [
+                "origin",
+                "size"
+            ],
             "additionalProperties": false
         },
         "random_offset_axis": {
@@ -1328,10 +425,11 @@
                     "type": "integer",
                     "minimum": 0,
                     "default": 0,
-                    "description": "Determines how many equally-spaced random values can be chosen across the range. A value of 0 means any continuous float value within the range can be picked."
+                    "description": "Determines how many equally-spaced random values can be chosen across the range. A value of 0 means any value within the range can be used."
                 },
                 "range": {
                     "type": "object",
+                    "description": "Determines how large offsets can be on this axis.",
                     "properties": {
                         "min": {
                             "type": "number",
@@ -1350,6 +448,1121 @@
                 }
             },
             "additionalProperties": false
+        },
+        "geometry": {
+            "description": "[1.21.90+] Determines the geometry of this block and any culling rules that should be applied. Can also be any vanilla block model.\n\n⚠️ LIMITATIONS:\n1. Model size is limited to 30×30×30 pixels.\n2. At least 1 pixel on each axis must sit within the normal 16×16×16 block unit space.\n3. The absolute position bounds are 30 pixels in each direction from the origin.",
+            "oneOf": [
+                {
+                    "type": "string",
+                    "description": "The identifier of the geometry model (e.g., 'geometry.example_block').",
+                    "examples": [
+                        "geometry.example_block",
+                        "minecraft:geometry.full_block",
+                        "minecraft:geometry.cross"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "identifier": {
+                            "type": "string",
+                            "description": "The identifier of the geometry.",
+                            "examples": [
+                                "geometry.example_block",
+                                "minecraft:geometry.full_block",
+                                "minecraft:geometry.cross"
+                            ]
+                        },
+                        "bone_visibility": {
+                            "type": "object",
+                            "description": "A key-value map determining which bones are visible. Keys are exact bone names (no wildcards); values are booleans or Molang strings. All bones are visible by default. Molang must adhere to permutation condition limitations.",
+                            "additionalProperties": {
+                                "type": [
+                                    "boolean",
+                                    "string"
+                                ]
+                            }
+                        },
+                        "culling": {
+                            "type": "string",
+                            "pattern": "^[a-z0-9_.-]+:culling\\.[a-z0-9_.-]+$",
+                            "description": "The identifier of the culling rules to apply. Takes the form '<namespace>:culling.<name>'."
+                        },
+                        "culling_layer": {
+                            "type": "string",
+                            "description": "The culling layer identifier checked by the 'same culling layer' condition in culling rules. Takes the form '<namespace>:culling_layer.<name>'. With the 'minecraft' namespace only 'minecraft:culling_layer.undefined' and 'minecraft:culling_layer.leaves' are allowed.",
+                            "anyOf": [
+                                {
+                                    "enum": [
+                                        "minecraft:culling_layer.undefined",
+                                        "minecraft:culling_layer.leaves"
+                                    ]
+                                },
+                                {
+                                    "pattern": "^(?!minecraft:)[a-z0-9_.-]+:culling_layer\\.[a-z0-9_.-]+$"
+                                }
+                            ]
+                        },
+                        "culling_shape": {
+                            "type": "string",
+                            "description": "The voxel shape to check against when culling adjacent blocks. May only be set to 'minecraft:unit_cube' if a vanilla full block model is being used.",
+                            "examples": [
+                                "minecraft:unit_cube"
+                            ]
+                        },
+                        "n_way_visual_rotation": {
+                            "type": "object",
+                            "description": "Applies N-way visual rotation to the geometry. Keys are axes ('x', 'y' or 'z') and values are state names (e.g. 'minecraft:sixteen_way_rotation').\n\n🛑 ROOT ONLY: may only be used in the root components object, not in permutations entries.",
+                            "properties": {
+                                "x": {
+                                    "type": "string"
+                                },
+                                "y": {
+                                    "type": "string"
+                                },
+                                "z": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "uv_lock": {
+                            "description": "Whether UVs are locked to their original rotation when rotation from the transformation component is applied. When false (default), all UVs follow the block's rotation. When true, all UVs have locked rotation. An array locks only the listed bones.",
+                            "oneOf": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "array",
+                                    "uniqueItems": true,
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            ],
+                            "default": false
+                        }
+                    },
+                    "required": [
+                        "identifier"
+                    ],
+                    "additionalProperties": false
+                }
+            ]
+        },
+        "material_instances": {
+            "type": "object",
+            "description": "[1.26.20+] Defines the material instances of a block, configuring how parts of the block are rendered. Each key is a material instance name. '*' is the default for all faces; 'up', 'down', 'north', 'south', 'west' and 'east' are built in. Custom names may be referenced by built-in instances or by the block model.\n\n⚠️ KNOWN ISSUES:\n1. In UIs, face dimming is applied before rotation from item_display_transforms (MCPE-235788).\n2. PBR textures are not supported when rendered as an entity (held, item frames, on ground, etc.) (MCPE-237517).",
+            "additionalProperties": {
+                "oneOf": [
+                    {
+                        "type": "string",
+                        "description": "The name of another material instance to inherit from (e.g., 'end')."
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "texture": {
+                                "type": "string",
+                                "description": "The texture atlas shortname to use from RP/textures/terrain_texture.json."
+                            },
+                            "render_method": {
+                                "type": "string",
+                                "enum": [
+                                    "opaque",
+                                    "alpha_test",
+                                    "alpha_test_single_sided",
+                                    "blend",
+                                    "double_sided",
+                                    "alpha_test_to_opaque",
+                                    "alpha_test_single_sided_to_opaque",
+                                    "blend_to_opaque"
+                                ],
+                                "default": "opaque",
+                                "description": "The render method used for faces. ALL material instances on a block must use the same render method. 'alpha_test_to_opaque', 'alpha_test_single_sided_to_opaque' and 'blend_to_opaque' switch to opaque beyond half the render distance."
+                            },
+                            "tint_method": {
+                                "type": "string",
+                                "enum": [
+                                    "none",
+                                    "grass",
+                                    "foliage",
+                                    "water"
+                                ],
+                                "description": "The tint method used to tint the texture based on the biome the block is placed in."
+                            },
+                            "alpha_masked_tint": {
+                                "type": "boolean",
+                                "default": false,
+                                "description": "When true, tint intensity is based on the texture's alpha channel. Requires a tint_method other than 'none' and render_method 'opaque'."
+                            },
+                            "ambient_occlusion": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 10,
+                                "description": "Intensity of 'smooth lighting' applied to faces (0.0-10.0). Defaults to 0.0 for light-emitting blocks and 1.0 otherwise."
+                            },
+                            "face_dimming": {
+                                "type": "boolean",
+                                "description": "Whether faces are dimmed by their direction. Defaults to false for light-emitting blocks and true otherwise."
+                            },
+                            "isotropic": {
+                                "type": "boolean",
+                                "default": false,
+                                "description": "Whether the UVs of faces are randomly rotated based on the block's position in the world."
+                            }
+                        },
+                        "required": [
+                            "texture"
+                        ],
+                        "additionalProperties": false
+                    }
+                ]
+            }
+        },
+        "visual_object": {
+            "type": "object",
+            "properties": {
+                "geometry": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/geometry"
+                        }
+                    ],
+                    "description": "The displayed geometry component."
+                },
+                "material_instances": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/material_instances"
+                        }
+                    ],
+                    "description": "The displayed material instances component."
+                }
+            },
+            "required": [
+                "geometry",
+                "material_instances"
+            ],
+            "additionalProperties": false
+        },
+        "components": {
+            "type": "object",
+            "description": "Block components. Only one instance of each component can be active at once. Custom components (registered via scripts) use any '<namespace>:<name>' key.",
+            "properties": {
+                "minecraft:block_entity": {
+                    "type": "object",
+                    "description": "[1.26.20+] Associates a block entity with the block, used to store additional data beyond the block's permutation and queued ticks.",
+                    "properties": {
+                        "dynamic_properties": {
+                            "type": "boolean",
+                            "description": "Whether dynamic properties may be added to the block using scripts."
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "minecraft:chest_obstruction": {
+                    "type": "object",
+                    "description": "[1.26.20+] Determines when the opening of chests placed below the block should be obstructed.",
+                    "properties": {
+                        "obstruction_rule": {
+                            "type": "string",
+                            "enum": [
+                                "always",
+                                "never",
+                                "shape"
+                            ],
+                            "default": "shape",
+                            "description": "'always' prevents chests from opening. 'never' allows them to open. 'shape' checks the block's collision box."
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "minecraft:collision_box": {
+                    "description": "[1.19.50+] Defines the area of the block that entities and particles collide with. true (default) uses a 16×16×16 box; false disables collision with entities.",
+                    "oneOf": [
+                        {
+                            "type": "boolean",
+                            "default": true
+                        },
+                        {
+                            "$ref": "#/$defs/collision_box_object"
+                        },
+                        {
+                            "type": "array",
+                            "maxItems": 16,
+                            "items": {
+                                "$ref": "#/$defs/collision_box_object"
+                            },
+                            "description": "An array of up to 16 collision box definitions. An empty array results in full block collision."
+                        }
+                    ]
+                },
+                "minecraft:connection_rule": {
+                    "type": "object",
+                    "description": "[1.26.0+] Determines whether other blocks such as fences and walls can connect to the block.",
+                    "properties": {
+                        "accepts_connections_from": {
+                            "type": "string",
+                            "enum": [
+                                "all",
+                                "only_fences",
+                                "none"
+                            ],
+                            "default": "all",
+                            "description": "'all' allows any block to connect. 'only_fences' restricts connections to fences (not walls, glass panes, etc.). 'none' prevents all connections."
+                        },
+                        "enabled_directions": {
+                            "type": "array",
+                            "uniqueItems": true,
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "north",
+                                    "east",
+                                    "south",
+                                    "west"
+                                ]
+                            },
+                            "default": [
+                                "north",
+                                "east",
+                                "south",
+                                "west"
+                            ],
+                            "description": "Lists the cardinal directions from which other blocks can connect to the block."
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "minecraft:crafting_table": {
+                    "type": "object",
+                    "description": "[1.19.50+] Turns your block into a crafting table, opening a functional crafting interface when interacted with.",
+                    "properties": {
+                        "crafting_tags": {
+                            "type": "array",
+                            "maxItems": 64,
+                            "uniqueItems": true,
+                            "items": {
+                                "type": "string",
+                                "maxLength": 64
+                            },
+                            "description": "Determines which recipes can be used by this crafting table. Recipes with any of the tags can be used. Custom tags should include a namespace (e.g., 'wiki:workbench'). Max 64 tags, up to 64 characters each."
+                        },
+                        "table_name": {
+                            "type": "string",
+                            "description": "The language file key (or raw string if no translation exists) displayed above the crafting grid. Defaults to the block's display name."
+                        }
+                    },
+                    "required": [
+                        "crafting_tags"
+                    ],
+                    "additionalProperties": false
+                },
+                "minecraft:destructible_by_explosion": {
+                    "description": "[1.19.20+] Determines whether the block can be destroyed by explosions. true (default) gives an explosion resistance of 0; false makes the block indestructible by explosions.",
+                    "oneOf": [
+                        {
+                            "type": "boolean",
+                            "default": true
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "explosion_resistance": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "default": 0,
+                                    "description": "How resistant the block is to explosions. Greater resistance reduces the chance of the block being destroyed near an explosion."
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    ]
+                },
+                "minecraft:destructible_by_mining": {
+                    "description": "[1.19.20+] Determines how long it takes for players to mine the block. true (default) destroys the block instantly; false makes it unminable.",
+                    "oneOf": [
+                        {
+                            "type": "boolean",
+                            "default": true
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "seconds_to_destroy": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "default": 0,
+                                    "description": "Sets the hardness value of the block. Greater numbers result in greater mining times.\n\n⚠️ WARNING: This name is misleading! It does not set the literal seconds to destroy the block. By default, the actual mining time of a custom block is 1.5× the value set here."
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    ]
+                },
+                "minecraft:destruction_particles": {
+                    "type": "object",
+                    "description": "[1.21.90+] Determines the appearance of the particles created when hitting, destroying, stepping on and falling onto blocks.",
+                    "properties": {
+                        "particle_count": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "default": 100,
+                            "description": "How many particles are created when the block is destroyed (0-255)."
+                        },
+                        "texture": {
+                            "type": "string",
+                            "description": "Texture atlas shortname from RP/textures/terrain_texture.json. By default uses the 'down' material instance (or '*' if not specified)."
+                        },
+                        "tint_method": {
+                            "type": "string",
+                            "enum": [
+                                "none",
+                                "grass",
+                                "foliage",
+                                "water"
+                            ],
+                            "description": "The tint method used to tint the texture based on the biome the block is placed in."
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "minecraft:display_name": {
+                    "type": "string",
+                    "description": "[1.19.60+] The language file key that determines the text displayed when hovering over the block in the inventory and hotbar. A raw string is shown if no translation exists.\n\n⚠️ NOTE: Minecraft may revert to 'tile.<identifier>.name' in some scenarios, such as the 'Can place on' tooltip.",
+                    "defaultSnippets": [
+                        {
+                            "label": "Localized display name key",
+                            "body": "tile.${1:namespace}:${2:block_name}.name"
+                        }
+                    ]
+                },
+                "minecraft:embedded_visual": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/visual_object"
+                        }
+                    ],
+                    "description": "Determines how this block is displayed when inside a Flower Pot. The block must also have 'minecraft:flower_pottable'.\n\n🛑 ROOT ONLY: This component may only be defined in the root components object of your block. It cannot be specified per permutation."
+                },
+                "minecraft:entity_fall_on": {
+                    "type": "object",
+                    "description": "[1.21.10+] Causes an entity fall on event to be triggered when an entity falls onto the block. The collision box must be taller than 3.2 pixels on the Y-axis for the event to trigger.",
+                    "properties": {
+                        "min_fall_distance": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 0,
+                            "description": "The minimum distance (in blocks) an entity must fall to trigger the event."
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "minecraft:flammable": {
+                    "description": "[1.26.20+] Determines how flammable the block is. true lets the block catch fire naturally from neighbors; false (default) means it can only be directly ignited.",
+                    "oneOf": [
+                        {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "catch_chance_modifier": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "default": 5,
+                                    "description": "Affects the chance this block catches flame next to fire. When 0, fire eventually burns out. When >0, fire burns until the block is destroyed (or forever if destroy_chance_modifier is 0). Default 5 matches vanilla planks."
+                                },
+                                "destroy_chance_modifier": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "Affects the chance this block is destroyed by flames when on fire."
+                                },
+                                "lava_flammable": {
+                                    "type": "string",
+                                    "enum": [
+                                        "always",
+                                        "never"
+                                    ],
+                                    "default": "never",
+                                    "description": "Determines when fire can spread to the block from lava."
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    ]
+                },
+                "minecraft:flower_pottable": {
+                    "type": "object",
+                    "description": "[1.26.20+] Allows the block to be placed in a Flower Pot. Use 'minecraft:embedded_visual' to change its appearance inside the pot.\n\n🛑 ROOT ONLY: This component may only be defined in the root components object of your block. It cannot be specified per permutation.",
+                    "additionalProperties": false
+                },
+                "minecraft:friction": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 0.9,
+                    "default": 0.4,
+                    "description": "[1.19.20+] Determines how slippery the block is for entities moving on top (0.0-0.9). Lower values are more slippery.\n\n⚠️ WARNING: This component is somewhat broken. It works correctly on boats, but higher friction values cause other entities to speed up rather than slow down."
+                },
+                "minecraft:geometry": {
+                    "$ref": "#/$defs/geometry"
+                },
+                "minecraft:instrument_sound": {
+                    "type": "object",
+                    "description": "Determines the sound played when a Note Block is placed above or below the block. At least one of 'up' or 'down' is required.",
+                    "properties": {
+                        "up": {
+                            "type": "string",
+                            "enum": [
+                                "note.banjo",
+                                "note.bassattack",
+                                "note.bd",
+                                "note.bell",
+                                "note.bit",
+                                "note.chime",
+                                "note.cow_bell",
+                                "note.creeper",
+                                "note.didgeridoo",
+                                "note.enderdragon",
+                                "note.flute",
+                                "note.guitar",
+                                "note.harp",
+                                "note.hat",
+                                "note.iron_xylophone",
+                                "note.none",
+                                "note.piglin",
+                                "note.pling",
+                                "note.skeleton",
+                                "note.snare",
+                                "note.trumpet",
+                                "note.trumpet_exposed",
+                                "note.trumpet_oxidized",
+                                "note.trumpet_weathered",
+                                "note.witherskeleton",
+                                "note.xylophone",
+                                "note.zombie"
+                            ],
+                            "default": "note.harp",
+                            "description": "The instrument heard when the Note Block is placed above the block."
+                        },
+                        "down": {
+                            "type": "string",
+                            "enum": [
+                                "note.banjo",
+                                "note.bassattack",
+                                "note.bd",
+                                "note.bell",
+                                "note.bit",
+                                "note.chime",
+                                "note.cow_bell",
+                                "note.creeper",
+                                "note.didgeridoo",
+                                "note.enderdragon",
+                                "note.flute",
+                                "note.guitar",
+                                "note.harp",
+                                "note.hat",
+                                "note.iron_xylophone",
+                                "note.none",
+                                "note.piglin",
+                                "note.pling",
+                                "note.skeleton",
+                                "note.snare",
+                                "note.trumpet",
+                                "note.trumpet_exposed",
+                                "note.trumpet_oxidized",
+                                "note.trumpet_weathered",
+                                "note.witherskeleton",
+                                "note.xylophone",
+                                "note.zombie"
+                            ],
+                            "default": "note.none",
+                            "description": "The instrument heard when the Note Block is placed below the block. Overrides the sound of blocks placed below the Note Block."
+                        }
+                    },
+                    "anyOf": [
+                        {
+                            "required": [
+                                "up"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "down"
+                            ]
+                        }
+                    ],
+                    "additionalProperties": false
+                },
+                "minecraft:item_visual": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/visual_object"
+                        }
+                    ],
+                    "description": "[1.21.60+] Determines how this block is displayed as an item (inventories, item frames, dropped on the ground, etc.)."
+                },
+                "minecraft:leashable": {
+                    "type": "object",
+                    "description": "[1.26.0+] Allows leads and balloons to be attached to the block like fences.",
+                    "properties": {
+                        "offset": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/$defs/vector3"
+                                }
+                            ],
+                            "default": [
+                                0,
+                                0,
+                                0
+                            ],
+                            "description": "The position of the middle of the knot relative to the bottom middle of the block."
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "minecraft:light_dampening": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 15,
+                    "default": 15,
+                    "description": "[1.19.10+] Determines the maximum number of light levels (0-15) dampened when passing through the block."
+                },
+                "minecraft:light_emission": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 15,
+                    "default": 0,
+                    "description": "[1.19.20+] Determines the integer light level (0-15) emitted by the block."
+                },
+                "minecraft:liquid_detection": {
+                    "type": "object",
+                    "description": "[1.26.0+] Determines how this block behaves with different types of liquid.",
+                    "properties": {
+                        "detection_rules": {
+                            "type": "array",
+                            "description": "An array of liquid behavior configurations.",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "liquid_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "water"
+                                        ],
+                                        "description": "Which liquid this rule applies to. Currently only 'water' is supported."
+                                    },
+                                    "can_contain_liquid": {
+                                        "type": "boolean",
+                                        "description": "Whether the liquid can occupy the same space as this block (e.g., waterlogging)."
+                                    },
+                                    "on_liquid_touches": {
+                                        "type": "string",
+                                        "enum": [
+                                            "blocking",
+                                            "broken",
+                                            "no_reaction",
+                                            "popped"
+                                        ],
+                                        "default": "blocking",
+                                        "description": "'blocking' prevents the liquid from flowing. 'broken' breaks the block. 'no_reaction' lets the liquid flow through. 'popped' pops the block off, dropping its loot."
+                                    },
+                                    "stops_liquid_flowing_from_direction": {
+                                        "type": "array",
+                                        "uniqueItems": true,
+                                        "items": {
+                                            "type": "string",
+                                            "enum": [
+                                                "north",
+                                                "east",
+                                                "south",
+                                                "west",
+                                                "up",
+                                                "down"
+                                            ]
+                                        },
+                                        "description": "Directions the liquid cannot flow out of this block from. If on_liquid_touches is 'no_reaction', also the directions it cannot flow into this block from."
+                                    },
+                                    "use_liquid_clipping": {
+                                        "type": "boolean",
+                                        "default": false,
+                                        "description": "Whether liquid contained in the block is visually clipped by the block's encompassing collider (smallest box containing all collision boxes)."
+                                    }
+                                },
+                                "required": [
+                                    "liquid_type",
+                                    "can_contain_liquid"
+                                ],
+                                "additionalProperties": false
+                            }
+                        }
+                    },
+                    "required": [
+                        "detection_rules"
+                    ],
+                    "additionalProperties": false
+                },
+                "minecraft:loot": {
+                    "type": "string",
+                    "description": "The path of the loot table dropped when the block is destroyed (ignored with Silk Touch). If omitted, the block is dropped as an item.",
+                    "defaultSnippets": [
+                        {
+                            "label": "Standard block loot table path",
+                            "body": "loot_tables/blocks/${1:block_name}.json"
+                        }
+                    ]
+                },
+                "minecraft:map_color": {
+                    "description": "Defines the block's appearance when viewed on maps. If omitted, the block is ignored by maps.",
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "pattern": "^#[0-9A-Fa-f]{6}$",
+                            "description": "A hex string defining the #RRGGBB map color."
+                        },
+                        {
+                            "type": "array",
+                            "minItems": 3,
+                            "maxItems": 3,
+                            "items": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 255
+                            },
+                            "description": "An array of 3 integers (0-255) defining the [R, G, B] map color."
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "color": {
+                                    "description": "The map color as a hex string or an [R, G, B] array.",
+                                    "oneOf": [
+                                        {
+                                            "type": "string",
+                                            "pattern": "^#[0-9A-Fa-f]{6}$"
+                                        },
+                                        {
+                                            "type": "array",
+                                            "minItems": 3,
+                                            "maxItems": 3,
+                                            "items": {
+                                                "type": "integer",
+                                                "minimum": 0,
+                                                "maximum": 255
+                                            }
+                                        }
+                                    ]
+                                },
+                                "tint_method": {
+                                    "type": "string",
+                                    "enum": [
+                                        "none",
+                                        "grass",
+                                        "foliage",
+                                        "water"
+                                    ],
+                                    "description": "The tint method used to tint the color based on the biome the block is placed in."
+                                }
+                            },
+                            "required": [
+                                "color"
+                            ],
+                            "additionalProperties": false
+                        }
+                    ]
+                },
+                "minecraft:material_instances": {
+                    "$ref": "#/$defs/material_instances"
+                },
+                "minecraft:movable": {
+                    "type": "object",
+                    "description": "[1.21.100+] Determines how a block can be moved by pistons.",
+                    "properties": {
+                        "movement_type": {
+                            "type": "string",
+                            "enum": [
+                                "immovable",
+                                "popped",
+                                "push",
+                                "push_pull"
+                            ],
+                            "default": "push_pull",
+                            "description": "'immovable' prevents movement. 'popped' breaks the block when pushed. 'push' allows pushing but not pulling. 'push_pull' allows both."
+                        },
+                        "sticky": {
+                            "type": "string",
+                            "enum": [
+                                "same"
+                            ],
+                            "description": "Set to 'same' to replicate Slime/Honey Block functionality."
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "minecraft:placement_filter": {
+                    "type": "object",
+                    "description": "[1.26.20+] Determines the placement conditions a block must be in to survive. If none are met the block is not placed, or pops off as an item if already placed.",
+                    "properties": {
+                        "conditions": {
+                            "type": "array",
+                            "maxItems": 64,
+                            "description": "Up to 64 condition objects specifying where the block can be placed and survive.",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "allowed_faces": {
+                                        "type": "array",
+                                        "uniqueItems": true,
+                                        "description": "The block faces the block can be placed on.",
+                                        "items": {
+                                            "type": "string",
+                                            "enum": [
+                                                "all",
+                                                "side",
+                                                "down",
+                                                "up",
+                                                "north",
+                                                "south",
+                                                "west",
+                                                "east"
+                                            ]
+                                        }
+                                    },
+                                    "block_filter": {
+                                        "type": "array",
+                                        "maxItems": 64,
+                                        "description": "Up to 64 block descriptors the block can be placed against in the allowed_faces direction.",
+                                        "items": {
+                                            "$ref": "#/$defs/block_descriptor"
+                                        }
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    },
+                    "required": [
+                        "conditions"
+                    ],
+                    "additionalProperties": false
+                },
+                "minecraft:precipitation_interactions": {
+                    "type": "object",
+                    "description": "[1.21.120+] Determines how the block interacts with rain and snow.",
+                    "properties": {
+                        "precipitation_behavior": {
+                            "type": "string",
+                            "enum": [
+                                "obstruct_rain_accumulate_snow",
+                                "obstruct_rain",
+                                "snowlogging",
+                                "none"
+                            ],
+                            "default": "obstruct_rain_accumulate_snow",
+                            "description": "'obstruct_rain_accumulate_snow' blocks rain (splashing on top) and lets snow layers build up above. 'obstruct_rain' blocks rain but prevents snow building up. 'snowlogging' lets rain pass through and lets snow build up or be placed inside the block. 'none' lets rain pass through and prevents snow building up inside or on top."
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "minecraft:random_offset": {
+                    "type": "object",
+                    "description": "[1.21.100+] Applies a random offset based on the block's world position to its collision box, selection box and geometry. Offset models must still adhere to the geometry limits.",
+                    "properties": {
+                        "x": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/$defs/random_offset_axis"
+                                }
+                            ],
+                            "description": "Offset parameters for the X axis."
+                        },
+                        "y": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/$defs/random_offset_axis"
+                                }
+                            ],
+                            "description": "Offset parameters for the Y axis."
+                        },
+                        "z": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/$defs/random_offset_axis"
+                                }
+                            ],
+                            "description": "Offset parameters for the Z axis."
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "minecraft:redstone_conductivity": {
+                    "type": "object",
+                    "description": "[1.21.40+] Defines the block's ability to conduct redstone power.",
+                    "properties": {
+                        "redstone_conductor": {
+                            "type": "boolean",
+                            "description": "Whether this block conducts direct redstone power."
+                        },
+                        "allows_wire_to_step_down": {
+                            "type": "boolean",
+                            "description": "Whether redstone wire can travel down the side of this block if it is not a conductor. Wire can always travel down the side of redstone conductors."
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "minecraft:redstone_consumer": {
+                    "type": "object",
+                    "description": "Allows the block to respond to redstone power via custom components using the onRedstoneUpdate() event hook.\n\n🛑 ROOT ONLY: This component may only be defined in the root components object of your block. It cannot be specified per permutation.",
+                    "properties": {
+                        "min_power": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 15,
+                            "default": 0,
+                            "description": "The minimum power level required to trigger onRedstoneUpdate()."
+                        },
+                        "propagates_power": {
+                            "type": "boolean",
+                            "default": false,
+                            "description": "Whether this block conducts redstone power to adjacent blocks. Overrides 'redstone_conductor' in the redstone conductivity component."
+                        }
+                    },
+                    "required": [
+                        "min_power"
+                    ],
+                    "additionalProperties": false
+                },
+                "minecraft:redstone_producer": {
+                    "type": "object",
+                    "description": "Causes the block to produce redstone power.",
+                    "properties": {
+                        "power": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 15,
+                            "description": "The power level produced by the block (0-15)."
+                        },
+                        "strongly_powered_face": {
+                            "type": "string",
+                            "enum": [
+                                "down",
+                                "up",
+                                "north",
+                                "south",
+                                "west",
+                                "east"
+                            ],
+                            "description": "The direction where strong power is produced. If strong power is received by a redstone conductor, blocks surrounding that conductor are also powered."
+                        },
+                        "connected_faces": {
+                            "type": "array",
+                            "uniqueItems": true,
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "down",
+                                    "up",
+                                    "north",
+                                    "south",
+                                    "west",
+                                    "east"
+                                ]
+                            },
+                            "description": "Which directions power is produced in. By default, all faces are connected."
+                        },
+                        "transform_relative": {
+                            "type": "boolean",
+                            "default": false,
+                            "description": "Whether face directions are relative to the rotation in the transformation component."
+                        }
+                    },
+                    "required": [
+                        "power",
+                        "strongly_powered_face"
+                    ],
+                    "additionalProperties": false
+                },
+                "minecraft:replaceable": {
+                    "type": "object",
+                    "description": "Allows this block to be replaced by attempting to place another block in its position (like grass or snow layers). Does not allow replacement by a block of the same permutation.",
+                    "additionalProperties": false
+                },
+                "minecraft:selection_box": {
+                    "description": "[1.19.60+] Defines the area of the block that can be selected by players. true (default) uses a 16×16×16 box; false makes the block unselectable.",
+                    "oneOf": [
+                        {
+                            "type": "boolean",
+                            "default": true
+                        },
+                        {
+                            "$ref": "#/$defs/selection_box_object"
+                        }
+                    ]
+                },
+                "minecraft:sound": {
+                    "type": "object",
+                    "description": "[1.26.20+] Determines the sounds the block makes (mining, stepping, breaking, placing).",
+                    "properties": {
+                        "sound": {
+                            "type": "string",
+                            "description": "The ID of the sound type to use from RP/sounds.json. Equivalent to the 'sound' parameter in RP/blocks.json.",
+                            "examples": [
+                                "wood",
+                                "stone",
+                                "gravel"
+                            ]
+                        }
+                    },
+                    "required": [
+                        "sound"
+                    ],
+                    "additionalProperties": false
+                },
+                "minecraft:support": {
+                    "type": "object",
+                    "description": "[1.26.0+] Defines the block's ability to support other blocks attached to it.",
+                    "properties": {
+                        "shape": {
+                            "type": "string",
+                            "enum": [
+                                "fence",
+                                "stair"
+                            ],
+                            "description": "Mimics the support behavior of a vanilla fence or stair."
+                        }
+                    },
+                    "required": [
+                        "shape"
+                    ],
+                    "additionalProperties": false
+                },
+                "minecraft:tags": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "[1.26.20+] Determines the list of tags the block has (e.g., 'wood', 'minecraft:is_axe_item_destructible', or custom 'wiki:tag')."
+                },
+                "minecraft:tick": {
+                    "type": "object",
+                    "description": "[1.21.10+] Causes the block to 'tick' after a random delay within interval_range. Handled by the onTick() custom component hook.\n\n⚠️ NOTE: A maximum of 100 queued ticks can run per chunk each tick, so ticks may be delayed in chunks with many ticking blocks.",
+                    "properties": {
+                        "interval_range": {
+                            "type": "array",
+                            "minItems": 2,
+                            "maxItems": 2,
+                            "items": {
+                                "type": "integer",
+                                "minimum": 0
+                            },
+                            "description": "Two durations (in ticks): the minimum and maximum delay."
+                        },
+                        "looping": {
+                            "type": "boolean",
+                            "default": false,
+                            "description": "Whether the block continuously ticks rather than ticking once."
+                        }
+                    },
+                    "required": [
+                        "interval_range"
+                    ],
+                    "additionalProperties": false
+                },
+                "minecraft:transformation": {
+                    "type": "object",
+                    "description": "[1.21.0+] Determines the transformation of the block's geometry, collision box and selection box. Transformed models must still adhere to the geometry limits.",
+                    "properties": {
+                        "translation": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/$defs/vector3"
+                                }
+                            ],
+                            "description": "Block units to offset the geometry by on each axis [X, Y, Z]."
+                        },
+                        "rotation": {
+                            "type": "array",
+                            "minItems": 3,
+                            "maxItems": 3,
+                            "items": {
+                                "type": "number",
+                                "multipleOf": 90
+                            },
+                            "description": "Degrees to rotate the geometry by on each axis [X, Y, Z]. Must be increments of 90 (negative for anticlockwise)."
+                        },
+                        "rotation_pivot": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/$defs/vector3"
+                                }
+                            ],
+                            "description": "The pivot point (in block units) to rotate around. Defaults to the center of the block."
+                        },
+                        "scale": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/$defs/vector3"
+                                }
+                            ],
+                            "description": "The factor to scale the geometry by on each axis [X, Y, Z]."
+                        },
+                        "scale_pivot": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/$defs/vector3"
+                                }
+                            ],
+                            "description": "The pivot point (in block units) to scale from. Defaults to the center of the block."
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "patternProperties": {
+                "^(?!minecraft:)[a-z0-9_.-]+:[a-z0-9_.-]+$": {
+                    "type": "object",
+                    "description": "[1.21.90+] A custom component registered in scripts via blockComponentRegistry.registerCustomComponent(). Parameters are passed as an object (use {} for none)."
+                }
+            },
+            "additionalProperties": false
+        },
+        "permutation_components": {
+            "description": "The block components (including tags and custom components) to apply or override when the condition is true. Later permutations take priority.",
+            "allOf": [
+                {
+                    "$ref": "#/$defs/components"
+                },
+                {
+                    "properties": {
+                        "minecraft:embedded_visual": {
+                            "not": {},
+                            "description": "ROOT ONLY: cannot be specified per permutation."
+                        },
+                        "minecraft:flower_pottable": {
+                            "not": {},
+                            "description": "ROOT ONLY: cannot be specified per permutation."
+                        },
+                        "minecraft:redstone_consumer": {
+                            "not": {},
+                            "description": "ROOT ONLY: cannot be specified per permutation."
+                        },
+                        "minecraft:geometry": {
+                            "not": {
+                                "type": "object",
+                                "required": [
+                                    "n_way_visual_rotation"
+                                ]
+                            },
+                            "description": "'n_way_visual_rotation' may only be used in the root components object, not in permutations."
+                        }
+                    }
+                }
+            ]
         }
     }
 }
